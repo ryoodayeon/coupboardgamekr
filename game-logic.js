@@ -628,10 +628,83 @@ class CoupGame {
     }
 }
 
-// 방 관리 클래스
+// 방 관리 클래스 (localStorage 기반)
 class RoomManager {
     constructor() {
         this.rooms = new Map();
+        this.loadRoomsFromStorage();
+        
+        // 주기적으로 만료된 방 정리 (5분마다)
+        setInterval(() => {
+            this.cleanupExpiredRooms();
+        }, 5 * 60 * 1000);
+    }
+
+    // localStorage에서 방 데이터 로드
+    loadRoomsFromStorage() {
+        try {
+            const storedRooms = localStorage.getItem('coup_rooms');
+            if (storedRooms) {
+                const roomsData = JSON.parse(storedRooms);
+                Object.entries(roomsData).forEach(([code, roomData]) => {
+                    // 30분 이내에 생성된 방만 로드
+                    const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+                    if (roomData.createdAt > thirtyMinutesAgo) {
+                        const room = {
+                            ...roomData,
+                            game: new CoupGame()
+                        };
+                        if (roomData.gameState) {
+                            Object.assign(room.game, roomData.gameState);
+                        }
+                        this.rooms.set(code, room);
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('방 데이터 로드 실패:', error);
+        }
+    }
+
+    // localStorage에 방 데이터 저장
+    saveRoomsToStorage() {
+        try {
+            const roomsData = {};
+            this.rooms.forEach((room, code) => {
+                roomsData[code] = {
+                    code: room.code,
+                    gameMode: room.gameMode,
+                    host: room.host,
+                    players: room.players,
+                    status: room.status,
+                    createdAt: room.createdAt,
+                    gameState: room.status === 'playing' ? room.game.getGameState() : null
+                };
+            });
+            localStorage.setItem('coup_rooms', JSON.stringify(roomsData));
+        } catch (error) {
+            console.warn('방 데이터 저장 실패:', error);
+        }
+    }
+
+    // 만료된 방 정리
+    cleanupExpiredRooms() {
+        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+        const expiredRooms = [];
+        
+        this.rooms.forEach((room, code) => {
+            if (room.createdAt < thirtyMinutesAgo) {
+                expiredRooms.push(code);
+            }
+        });
+        
+        expiredRooms.forEach(code => {
+            this.rooms.delete(code);
+        });
+        
+        if (expiredRooms.length > 0) {
+            this.saveRoomsToStorage();
+        }
     }
 
     // 방 생성
@@ -643,10 +716,12 @@ class RoomManager {
             host: hostId,
             players: [{ id: hostId, name: hostName }],
             game: new CoupGame(),
-            status: 'waiting'
+            status: 'waiting',
+            createdAt: Date.now()
         };
         
         this.rooms.set(roomCode, room);
+        this.saveRoomsToStorage();
         return roomCode;
     }
 
@@ -662,6 +737,9 @@ class RoomManager {
 
     // 방 입장
     joinRoom(roomCode, playerId, playerName) {
+        // 먼저 최신 데이터 로드
+        this.loadRoomsFromStorage();
+        
         const room = this.rooms.get(roomCode);
         if (!room) {
             return { success: false, message: '존재하지 않는 방입니다.' };
@@ -681,6 +759,7 @@ class RoomManager {
         }
 
         room.players.push({ id: playerId, name: playerName });
+        this.saveRoomsToStorage();
         return { success: true, room: room };
     }
 
@@ -698,11 +777,13 @@ class RoomManager {
             room.host = room.players[0].id;
         }
 
+        this.saveRoomsToStorage();
         return { success: true, room: room };
     }
 
     // 방 정보 가져오기
     getRoom(roomCode) {
+        this.loadRoomsFromStorage();
         return this.rooms.get(roomCode);
     }
 
@@ -719,6 +800,7 @@ class RoomManager {
 
         room.status = 'playing';
         room.game.initializeGame(room.players, room.gameMode);
+        this.saveRoomsToStorage();
         
         return { success: true, game: room.game };
     }

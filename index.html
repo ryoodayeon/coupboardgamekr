@@ -84,6 +84,9 @@
                 <input type="text" id="room-code-input" placeholder="방 코드를 입력하세요" maxlength="6">
                 <button id="join-room-confirm" disabled>입장하기</button>
                 <div id="join-error" class="error-message"></div>
+                <div class="url-sharing-info">
+                    <p><strong>💡 팁:</strong> 친구가 방을 만들었다면, 브라우저 주소창의 URL을 복사해서 공유받으세요!</p>
+                </div>
             </div>
             <button id="back-to-menu-2" class="secondary-btn">뒤로가기</button>
         </div>
@@ -108,6 +111,13 @@
                 <h2>방 코드: <span id="room-code-display"></span></h2>
                 <p id="game-mode-display"></p>
                 <p>대기 중... <span id="player-count">1</span>/6</p>
+                <div class="sharing-section">
+                    <p><strong>🔗 친구 초대하기:</strong></p>
+                    <div class="share-options">
+                        <button id="copy-url-btn" class="share-btn">📋 URL 복사</button>
+                        <button id="copy-code-btn" class="share-btn">🔢 코드 복사</button>
+                    </div>
+                </div>
             </div>
             <div class="players-list">
                 <h3>참가자 목록</h3>

@@ -8,6 +8,7 @@ class CoupApp {
         this.playerId = this.generatePlayerId();
         
         this.initializeEventListeners();
+        this.checkURLForRoomCode();
         this.showScreen('nickname-screen');
     }
 
@@ -96,6 +97,15 @@ class CoupApp {
             this.leaveRoom();
         });
 
+        // 공유 버튼들
+        document.getElementById('copy-url-btn').addEventListener('click', () => {
+            this.copyRoomURL();
+        });
+
+        document.getElementById('copy-code-btn').addEventListener('click', () => {
+            this.copyRoomCode();
+        });
+
         // 게임 화면
         document.getElementById('help-btn').addEventListener('click', () => {
             this.showHelpModal();
@@ -149,8 +159,19 @@ class CoupApp {
 
         this.nickname = nickname;
         document.getElementById('current-nickname').textContent = nickname;
-        this.showScreen('main-menu');
-        this.showNotification(`${nickname}님 환영합니다!`, 'success');
+        
+        // URL에 방 코드가 있으면 자동으로 방 입장 시도
+        if (this.autoJoinRoomCode) {
+            document.getElementById('room-code-input').value = this.autoJoinRoomCode;
+            this.showScreen('join-room-screen');
+            this.showNotification(`${nickname}님 환영합니다! 방 "${this.autoJoinRoomCode}"에 입장합니다.`, 'success');
+            
+            // 자동으로 방 입장 버튼 활성화
+            document.getElementById('join-room-confirm').disabled = false;
+        } else {
+            this.showScreen('main-menu');
+            this.showNotification(`${nickname}님 환영합니다!`, 'success');
+        }
     }
 
     // 방 생성
@@ -161,6 +182,10 @@ class CoupApp {
             const roomCode = roomManager.createRoom(this.playerId, this.nickname, gameMode);
             this.currentRoom = roomManager.getRoom(roomCode);
             game.myPlayerId = this.playerId;
+            
+            // URL 업데이트
+            const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+            window.history.pushState({}, '', newUrl);
             
             this.showWaitingRoom();
             this.showNotification(`방이 생성되었습니다! 코드: ${roomCode}`, 'success');
@@ -178,6 +203,11 @@ class CoupApp {
         if (result.success) {
             this.currentRoom = result.room;
             game.myPlayerId = this.playerId;
+            
+            // URL 업데이트
+            const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+            window.history.pushState({}, '', newUrl);
+            
             this.showWaitingRoom();
             this.showNotification('방에 입장했습니다!', 'success');
         } else {
@@ -260,6 +290,11 @@ class CoupApp {
 
         roomManager.leaveRoom(this.currentRoom.code, this.playerId);
         this.currentRoom = null;
+        
+        // URL에서 방 코드 제거
+        const newUrl = `${window.location.origin}${window.location.pathname}`;
+        window.history.pushState({}, '', newUrl);
+        
         this.showScreen('main-menu');
         this.showNotification('방에서 나갔습니다.', 'success');
     }
@@ -875,6 +910,68 @@ class CoupApp {
     // 에러 메시지 표시
     showError(elementId, message) {
         document.getElementById(elementId).textContent = message;
+    }
+
+    // URL에서 방 코드 확인
+    checkURLForRoomCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (roomCode && roomCode.length === GAME_CONFIG.ROOM_CODE_LENGTH) {
+            // URL에 방 코드가 있으면 입력 필드에 자동 입력
+            this.autoJoinRoomCode = roomCode;
+        }
+    }
+
+    // 방 URL 복사
+    copyRoomURL() {
+        if (!this.currentRoom) return;
+
+        const url = `${window.location.origin}${window.location.pathname}?room=${this.currentRoom.code}`;
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                this.showNotification('방 URL이 복사되었습니다! 친구들에게 공유하세요! 🎉', 'success');
+            }).catch(() => {
+                this.fallbackCopyText(url);
+            });
+        } else {
+            this.fallbackCopyText(url);
+        }
+    }
+
+    // 방 코드 복사
+    copyRoomCode() {
+        if (!this.currentRoom) return;
+
+        const code = this.currentRoom.code;
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(code).then(() => {
+                this.showNotification(`방 코드 "${code}"가 복사되었습니다! 📋`, 'success');
+            }).catch(() => {
+                this.fallbackCopyText(code);
+            });
+        } else {
+            this.fallbackCopyText(code);
+        }
+    }
+
+    // 클립보드 복사 대체 방법
+    fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            this.showNotification('복사되었습니다! 📋', 'success');
+        } catch (err) {
+            this.showNotification('복사에 실패했습니다. 수동으로 복사해주세요.', 'error');
+        }
+        
+        document.body.removeChild(textArea);
     }
 
     // 알림 표시

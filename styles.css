@@ -714,6 +714,58 @@ button:disabled {
     color: white;
 }
 
+/* 공유 기능 */
+.sharing-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0fff4;
+    border-radius: 8px;
+    border: 1px solid #68d391;
+}
+
+.sharing-section p {
+    margin-bottom: 10px;
+    color: #2d3748;
+    font-size: 0.9rem;
+}
+
+.share-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.share-btn:hover {
+    background: #38a169;
+    transform: translateY(-1px);
+}
+
+.url-sharing-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: #e6f3ff;
+    border-radius: 8px;
+    border-left: 4px solid #4299e1;
+}
+
+.url-sharing-info p {
+    margin: 0;
+    color: #2d3748;
+    font-size: 0.9rem;
+}
+
 /* 게임 설명서 스타일 */
 .rules-content {
     text-align: left;
