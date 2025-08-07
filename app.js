@@ -357,18 +357,39 @@ class CoupApp {
     }
 
     // 게임 시작
-    startGame() {
-        if (!this.currentRoom || this.currentRoom.host !== this.playerId) return;
+    async startGame() {
+        if (!this.currentRoom || this.currentRoom.host !== this.playerId) {
+            this.showNotification('게임을 시작할 권한이 없습니다.', 'error');
+            return;
+        }
 
-        const result = roomManager.startGame(this.currentRoom.code, this.playerId);
-        
-        if (result.success) {
-            // 게임 상태를 로컬 game 인스턴스에 복사
-            Object.assign(game, result.game);
-            this.showGameScreen();
-            this.showNotification('게임이 시작되었습니다!', 'success');
-        } else {
-            this.showNotification(result.message, 'error');
+        try {
+            let result;
+            
+            // 온라인/오프라인 모드에 따라 분기
+            if (this.isOnline && onlineRoomManager) {
+                result = await onlineRoomManager.startGame(this.currentRoom.code, this.playerId);
+            } else {
+                result = roomManager.startGame(this.currentRoom.code, this.playerId);
+            }
+            
+            if (result.success) {
+                // 온라인 모드에서는 실시간 동기화로 게임 시작됨
+                if (this.isOnline) {
+                    this.showNotification('게임이 시작됩니다! 🎮', 'success');
+                    // 온라인에서는 Firebase 리스너가 자동으로 게임 화면으로 전환
+                } else {
+                    // 로컬 모드에서는 직접 게임 시작
+                    Object.assign(game, result.game);
+                    this.showGameScreen();
+                    this.showNotification('게임이 시작되었습니다!', 'success');
+                }
+            } else {
+                this.showNotification(result.message, 'error');
+            }
+        } catch (error) {
+            console.error('게임 시작 오류:', error);
+            this.showNotification('게임 시작에 실패했습니다.', 'error');
         }
     }
 
