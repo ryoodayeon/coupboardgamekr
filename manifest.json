@@ -1,0 +1,22 @@
+{
+  "name": "쿠 (Coup) 보드게임",
+  "short_name": "쿠게임",
+  "description": "블러핑과 심리전의 보드게임 쿠를 온라인으로 즐기세요!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

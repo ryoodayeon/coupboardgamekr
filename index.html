@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쿠 (Coup) - 보드게임</title>
+    <meta name="description" content="블러핑과 심리전의 보드게임 쿠(Coup)를 온라인으로 즐기세요! 기본판과 확장판 모두 지원합니다.">
+    <meta name="keywords" content="쿠, Coup, 보드게임, 카드게임, 블러핑, 온라인게임">
+    <meta name="author" content="Coup Board Game Web">
+    
+    <!-- Open Graph 메타 태그 (소셜 미디어 공유용) -->
+    <meta property="og:title" content="쿠 (Coup) - 온라인 보드게임">
+    <meta property="og:description" content="블러핑과 심리전의 보드게임 쿠를 웹에서 즐기세요!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-username.github.io/coup-board-game/">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 닉네임 설정 화면 -->
+    <div id="nickname-screen" class="screen active">
+        <div class="container">
+            <div class="logo">
+                <h1>🎲 쿠 (Coup)</h1>
+                <p>블러핑과 심리전의 카드게임</p>
+            </div>
+            <div class="nickname-form">
+                <input type="text" id="nickname-input" placeholder="닉네임을 입력하세요" maxlength="12">
+                <button id="nickname-confirm" disabled>확인</button>
+                <div id="nickname-error" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 메뉴 화면 -->
+    <div id="main-menu" class="screen">
+        <div class="container">
+            <div class="user-info">
+                <span id="current-nickname"></span>님 환영합니다!
+            </div>
+            <div class="menu-buttons">
+                <button id="create-room-btn" class="menu-btn">
+                    🔨 방 생성하기
+                </button>
+                <button id="join-room-btn" class="menu-btn">
+                    🚪 방 입장하기
+                </button>
+                <button id="game-rules-btn" class="menu-btn">
+                    📘 게임 설명 보기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 방 생성 화면 -->
+    <div id="create-room-screen" class="screen">
+        <div class="container">
+            <h2>방 생성하기</h2>
+            <div class="game-mode-selection">
+                <h3>게임 모드 선택</h3>
+                <div class="mode-toggle">
+                    <input type="radio" id="basic-mode" name="game-mode" value="basic" checked>
+                    <label for="basic-mode">기본판</label>
+                    <input type="radio" id="expansion-mode" name="game-mode" value="expansion">
+                    <label for="expansion-mode">확장판</label>
+                </div>
+            </div>
+            <button id="create-room-confirm" class="primary-btn">방 만들기</button>
+            <button id="back-to-menu-1" class="secondary-btn">뒤로가기</button>
+        </div>
+    </div>
+
+    <!-- 방 입장 화면 -->
+    <div id="join-room-screen" class="screen">
+        <div class="container">
+            <h2>방 입장하기</h2>
+            <div class="room-code-form">
+                <input type="text" id="room-code-input" placeholder="방 코드를 입력하세요" maxlength="6">
+                <button id="join-room-confirm" disabled>입장하기</button>
+                <div id="join-error" class="error-message"></div>
+            </div>
+            <button id="back-to-menu-2" class="secondary-btn">뒤로가기</button>
+        </div>
+    </div>
+
+    <!-- 게임 설명서 화면 -->
+    <div id="game-rules-screen" class="screen">
+        <div class="container">
+            <div class="rules-content">
+                <h2>🎲 쿠 (Coup) 게임 설명서</h2>
+                <!-- 설명서 내용은 JavaScript로 동적 생성 -->
+                <div id="rules-content"></div>
+            </div>
+            <button id="back-to-menu-3" class="secondary-btn">메인 메뉴로</button>
+        </div>
+    </div>
+
+    <!-- 대기실 화면 -->
+    <div id="waiting-room" class="screen">
+        <div class="container">
+            <div class="room-info">
+                <h2>방 코드: <span id="room-code-display"></span></h2>
+                <p id="game-mode-display"></p>
+                <p>대기 중... <span id="player-count">1</span>/6</p>
+            </div>
+            <div class="players-list">
+                <h3>참가자 목록</h3>
+                <div id="players-container"></div>
+            </div>
+            <div class="waiting-controls">
+                <button id="start-game-btn" class="primary-btn" style="display: none;">게임 시작</button>
+                <button id="leave-room-btn" class="secondary-btn">방 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 플레이 화면 -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <!-- 상단: 다른 플레이어들 정보 -->
+            <div class="other-players">
+                <div id="other-players-container"></div>
+            </div>
+
+            <!-- 중앙: 게임 보드 -->
+            <div class="game-board">
+                <div class="game-info">
+                    <div class="current-turn">
+                        <span id="current-player">플레이어</span>의 차례
+                    </div>
+                    <div class="action-log">
+                        <div id="action-log-content"></div>
+                    </div>
+                </div>
+                
+                <!-- 행동 선택 영역 -->
+                <div class="action-selection" id="action-selection">
+                    <h3>행동을 선택하세요</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" data-action="income">소득 (코인 1개)</button>
+                        <button class="action-btn" data-action="foreign-aid">해외 원조 (코인 2개)</button>
+                        <button class="action-btn" data-action="coup">쿠데타 (코인 7개)</button>
+                        <button class="action-btn" data-action="character">캐릭터 능력 사용</button>
+                    </div>
+                    
+                    <!-- 확장판 전용 피난처 행동 -->
+                    <div class="sanctuary-actions" id="sanctuary-actions" style="display: none;">
+                        <h4>🏠 피난처 행동</h4>
+                        <div class="sanctuary-info">
+                            피난처 코인: <span id="sanctuary-coins">0</span>개
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" data-action="change-my-religion">내 종교 바꾸기 (코인 1개)</button>
+                            <button class="action-btn" data-action="change-other-religion">남의 종교 바꾸기 (코인 2개)</button>
+                            <button class="action-btn" data-action="take-sanctuary">피난처 획득 (공작 필요)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 캐릭터 선택 영역 -->
+                <div class="character-selection" id="character-selection" style="display: none;">
+                    <h3>사용할 캐릭터를 선택하세요</h3>
+                    <div class="character-buttons" id="character-buttons"></div>
+                </div>
+
+                <!-- 대상 선택 영역 -->
+                <div class="target-selection" id="target-selection" style="display: none;">
+                    <h3>대상을 선택하세요</h3>
+                    <div class="target-buttons" id="target-buttons"></div>
+                </div>
+
+                <!-- 도전/방어 영역 -->
+                <div class="challenge-defense" id="challenge-defense" style="display: none;">
+                    <div class="challenge-info">
+                        <p id="challenge-message"></p>
+                    </div>
+                    <div class="challenge-buttons">
+                        <button id="challenge-btn">도전하기</button>
+                        <button id="block-btn" style="display: none;">막기</button>
+                        <button id="allow-btn">허용하기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단: 내 정보 -->
+            <div class="my-info">
+                <div class="my-cards">
+                    <h3>내 카드</h3>
+                    <div id="my-cards-container"></div>
+                </div>
+                <div class="my-coins">
+                    <h3>내 코인: <span id="my-coin-count">2</span>개</h3>
+                </div>
+                <div class="game-controls">
+                    <button id="help-btn" class="help-btn">❓ 도움말</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 종료 화면 -->
+    <div id="game-end-screen" class="screen">
+        <div class="container">
+            <div class="victory-animation">
+                <h1>🎆 게임 종료! 🎆</h1>
+            </div>
+            <div class="rankings">
+                <h2>👑 최종 순위</h2>
+                <div id="rankings-list"></div>
+            </div>
+            <div class="game-end-controls">
+                <button id="play-again-btn" class="primary-btn">🌀 다시 한 번</button>
+                <button id="leave-game-btn" class="secondary-btn">🚪 방 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 도움말 모달 -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="help-content"></div>
+        </div>
+    </div>
+
+    <!-- 알림 팝업 -->
+    <div id="notification" class="notification"></div>
+
+    <script src="game-data.js"></script>
+    <script src="game-logic.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
