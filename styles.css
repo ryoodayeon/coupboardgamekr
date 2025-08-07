@@ -92,6 +92,14 @@ button:disabled {
     box-shadow: 0 8px 25px 0 rgba(102, 126, 234, 0.4);
 }
 
+.primary-btn.disabled,
+.primary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.2) !important;
+}
+
 .secondary-btn {
     background: #f7fafc;
     color: #4a5568;

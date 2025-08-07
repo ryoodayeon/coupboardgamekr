@@ -295,12 +295,31 @@ class CoupApp {
             this.currentRoom.gameMode === 'expansion' ? '확장판 모드' : '기본판 모드';
         
         this.updatePlayersList();
+        this.updateStartButton(); // 별도 메서드로 분리
+    }
+
+    // 게임 시작 버튼 상태 업데이트
+    updateStartButton() {
+        if (!this.currentRoom) return;
+
+        const startBtn = document.getElementById('start-game-btn');
         
         // 호스트인 경우에만 시작 버튼 표시
-        const startBtn = document.getElementById('start-game-btn');
         if (this.currentRoom.host === this.playerId) {
             startBtn.style.display = 'block';
-            startBtn.disabled = this.currentRoom.players.length < GAME_CONFIG.MIN_PLAYERS;
+            
+            // 2명 이상이면 게임 시작 가능
+            const canStart = this.currentRoom.players.length >= GAME_CONFIG.MIN_PLAYERS;
+            startBtn.disabled = !canStart;
+            
+            // 버튼 텍스트 업데이트
+            if (canStart) {
+                startBtn.textContent = `게임 시작 (${this.currentRoom.players.length}명)`;
+                startBtn.classList.remove('disabled');
+            } else {
+                startBtn.textContent = `게임 시작 (최소 2명 필요)`;
+                startBtn.classList.add('disabled');
+            }
         } else {
             startBtn.style.display = 'none';
         }
@@ -1073,6 +1092,7 @@ class CoupApp {
         // UI 업데이트
         if (this.currentScreen === 'waiting-room') {
             this.updatePlayersList();
+            this.updateStartButton(); // 시작 버튼도 함께 업데이트
         }
     }
 
