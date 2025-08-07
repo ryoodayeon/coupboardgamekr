@@ -335,22 +335,78 @@ const HELP_CONTENT = `
 <h3>📝 내 차례에 할 수 있는 행동</h3>
 <ul>
     <li><strong>소득:</strong> 코인 1개 (막을 수 없음)</li>
-    <li><strong>해외 원조:</strong> 코인 2개 (공작이 막을 수 있음)</li>
-    <li><strong>쿠데타:</strong> 코인 7개 지불, 카드 1장 제거</li>
+    <li><strong>해외 원조:</strong> 코인 2개 받기(공작이 막을 수 있음)</li>
+    <li><strong>쿠데타:</strong> 코인 7개 지불, 카드 1장 제거(막을 수 없음)</li>
     <li><strong>캐릭터 능력:</strong> 각 캐릭터의 특별 능력 사용</li>
 </ul>
 
-<h3>🛡️ 방어 가능한 행동</h3>
-<ul>
-    <li><strong>해외 원조 → 공작</strong>이 막을 수 있음</li>
-    <li><strong>암살 → 백작부인</strong>이 막을 수 있음</li>
-    <li><strong>갈취 → 사령관, 대사, 종교재판관</strong>이 막을 수 있음</li>
-</ul>
+<h3>🛡️ 캐릭터 능력</h3>
+<table class="character-table" style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+    <thead>
+        <tr style="background-color: #f5f5f5;">
+            <th style="border: 1px solid #ddd; padding: 8px;">캐릭터</th>
+            <th style="border: 1px solid #ddd; padding: 8px;">설명</th>
+            <th style="border: 1px solid #ddd; padding: 8px;">공격 막기 능력</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">👑 공작</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">"세금이닷!" 내 턴에 코인 3개를 그냥 가져올 수 있어요.(아무도 막지 못해요) 다른 사람이 해외 원조하려고 하면 막을 수 있어요!</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">해외 원조를 막을 수 있음</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">🔪 암살자</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">코인 3개를 내고, 다른 사람 카드 1장을 죽일 수 있어요. (단, 백작부인이 막을 수 있어요!)</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">없음</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">🛡️ 대사</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">중앙 카드 2장을 몰래 보고, 내 카드 2장을 원하는 대로 바꿔요! (즉, 카드를 안 바꿀 수도 하나만 바꿀 수도 2장 모두 바꿀 수도 있어요) 또 사령관의 훔치기를 막을 수 있어요!</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">사령관의 훔치기 방어</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">🕵️ 사령관</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">다른 사람한테서 코인 2개 훔쳐요!</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">사령관, 대사(혹은 종교 재판관)은 막을 수 있음</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">🧱 백작부인</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">암살을 막을 수 있는 유일한 카드! 직접 공격은 못 해요.</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">암살을 방어</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>* 종교재판관 캐릭터 (확장 전용)</h3>
+<p>이 카드는 기본 카드 대사 대신 사용해요!</p>
+<table class="character-table" style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+    <thead>
+        <tr style="background-color: #f5f5f5;">
+            <th style="border: 1px solid #ddd; padding: 8px;">행동</th>
+            <th style="border: 1px solid #ddd; padding: 8px;">설명</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">교환</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">중앙 덱에서 1장 뽑고, 내 카드 중 1장과 몰래 바꾸기</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">심문</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">다른 사람 카드 1장 몰래 보고, 그대로 두거나 바꾸기</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">방어 능력</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">사령관의 훔치기 방어 가능</td>
+        </tr>
+    </tbody>
+</table>
 
 <h3>⚡ 도전 규칙</h3>
-<p>캐릭터 능력을 사용할 때 다른 플레이어가 도전할 수 있습니다.</p>
-<p>도전이 성공하면 거짓말한 플레이어가 카드를 잃고,</p>
-<p>도전이 실패하면 도전한 플레이어가 카드를 잃습니다.</p>
+<p>캐릭터 능력을 사용할 때 다른 플레이어가 도전할 수 있습니다.<br>
+도전이 성공하면 거짓말한 플레이어가 카드를 잃고,<br>
+도전이 실패하면 도전한 플레이어가 카드를 잃습니다.</p>
 
 <h3>🎯 전략 팁</h3>
 <ul>

@@ -410,6 +410,11 @@ class CoupApp {
 
     // 게임 화면 표시
     showGameScreen() {
+        // 게임 로직에 내 플레이어 ID 설정
+        if (game && this.playerId) {
+            game.myPlayerId = this.playerId;
+        }
+        
         this.showScreen('game-screen');
         this.updateGameUI();
         this.setupGameEventListeners();
@@ -425,8 +430,78 @@ class CoupApp {
             });
         });
 
+        // 도전/방어 버튼들
+        const challengeBtn = document.getElementById('challenge-btn');
+        const blockBtn = document.getElementById('block-btn');
+        const allowBtn = document.getElementById('allow-btn');
+        
+        if (challengeBtn) {
+            challengeBtn.addEventListener('click', () => this.challengeAction());
+        }
+        
+        if (blockBtn) {
+            blockBtn.addEventListener('click', () => this.blockAction());
+        }
+        
+        if (allowBtn) {
+            allowBtn.addEventListener('click', () => this.allowAction());
+        }
+
         // 캐릭터 버튼 이벤트는 동적으로 추가
         this.updateActionButtons();
+    }
+    
+    // 카드 선택 함수
+    selectCharacterCard(cardId) {
+        if (!this.isMyTurn()) {
+            this.showNotification('당신의 차례가 아닙니다!', 'error');
+            return;
+        }
+        
+        // 선택된 카드로 액션 실행
+        this.executeCharacterAction(cardId);
+    }
+    
+    // 내 차례인지 확인
+    isMyTurn() {
+        if (!game || !game.getCurrentPlayer()) return false;
+        return game.getCurrentPlayer().id === this.playerId;
+    }
+    
+    // 캐릭터 액션 실행
+    executeCharacterAction(cardId) {
+        const character = CHARACTERS[cardId.toUpperCase()];
+        if (!character || !character.actions || character.actions.length === 0) {
+            this.showNotification('이 캐릭터는 특별한 능력이 없습니다.', 'error');
+            return;
+        }
+        
+        const action = character.actions[0]; // 첫 번째 액션 실행
+        this.handleActionSelection(action);
+    }
+    
+    // 도전 액션
+    challengeAction() {
+        this.showNotification('도전 기능은 추후 구현 예정입니다.', 'info');
+    }
+    
+    // 방어 액션
+    blockAction() {
+        this.showNotification('방어 기능은 추후 구현 예정입니다.', 'info');
+    }
+    
+    // 허용 액션
+    allowAction() {
+        this.showNotification('액션을 허용했습니다.', 'success');
+        this.hideChallengPanel();
+    }
+    
+    // 도전/방어 패널 숨기기
+    hideChallengPanel() {
+        const panel = document.getElementById('challenge-defense');
+        if (panel) {
+            panel.style.display = 'none';
+        }
     }
 
     // 행동 선택 처리
@@ -822,7 +897,11 @@ class CoupApp {
     // 플레이어 표시 업데이트
     updatePlayersDisplay() {
         const container = document.getElementById('other-players-container');
-        const myPlayer = game.getMyPlayer();
+        
+        if (!game || !game.players) {
+            console.warn('게임 데이터가 없습니다.');
+            return;
+        }
         
         container.innerHTML = '';
         
@@ -832,7 +911,7 @@ class CoupApp {
             const playerDiv = document.createElement('div');
             playerDiv.className = 'player-card';
             
-            if (player.id === game.getCurrentPlayer().id) {
+            if (game.getCurrentPlayer() && player.id === game.getCurrentPlayer().id) {
                 playerDiv.classList.add('current-turn');
             }
             
@@ -849,8 +928,8 @@ class CoupApp {
             playerDiv.innerHTML = `
                 <div class="player-name">${player.name}${religionInfo}</div>
                 <div class="player-stats">
-                    카드: ${player.cards.length}장<br>
-                    코인: ${player.coins}개
+                    <div class="card-count">💳 ${player.cards.length}장</div>
+                    <div class="coin-count">🪙 ${player.coins}개</div>
                 </div>
             `;
             
@@ -858,6 +937,7 @@ class CoupApp {
         });
 
         // 내 코인 표시 업데이트
+        const myPlayer = game.getMyPlayer();
         if (myPlayer) {
             document.getElementById('my-coin-count').textContent = myPlayer.coins;
         }
@@ -866,21 +946,41 @@ class CoupApp {
     // 내 카드 표시 업데이트
     updateMyCards() {
         const container = document.getElementById('my-cards-container');
-        const myPlayer = game.getMyPlayer();
         
-        if (!myPlayer) return;
+        if (!game || !game.getMyPlayer) {
+            console.warn('게임 또는 플레이어 데이터가 없습니다.');
+            return;
+        }
+        
+        const myPlayer = game.getMyPlayer();
+        if (!myPlayer || !myPlayer.cards) {
+            console.warn('내 플레이어 데이터가 없습니다.');
+            return;
+        }
 
         container.innerHTML = '';
         
         myPlayer.cards.forEach((cardId, index) => {
             const character = CHARACTERS[cardId.toUpperCase()];
+            if (!character) {
+                console.warn(`캐릭터 정보를 찾을 수 없습니다: ${cardId}`);
+                return;
+            }
+            
             const cardDiv = document.createElement('div');
             cardDiv.className = 'character-card';
+            cardDiv.dataset.cardId = cardId;
             
             cardDiv.innerHTML = `
                 <div class="character-icon">${character.icon}</div>
                 <div class="character-name">${character.name}</div>
+                <div class="character-description">${character.actionDescription}</div>
             `;
+            
+            // 카드 클릭 시 해당 캐릭터 능력 사용 (나중에 구현)
+            cardDiv.addEventListener('click', () => {
+                this.selectCharacterCard(cardId);
+            });
             
             container.appendChild(cardDiv);
         });
@@ -890,20 +990,47 @@ class CoupApp {
     updateActionLog() {
         const container = document.getElementById('action-log-content');
         
+        if (!game || !game.actionLog) {
+            return;
+        }
+        
         container.innerHTML = '';
         
-        game.actionLog.slice(0, 5).forEach(log => {
+        // 최근 5개의 로그만 표시
+        const recentLogs = game.actionLog.slice(-5);
+        
+        recentLogs.forEach(logEntry => {
             const logDiv = document.createElement('div');
-            logDiv.className = 'action-log-item';
-            logDiv.textContent = `${log.timestamp} - ${log.message}`;
+            logDiv.className = 'log-entry';
+            logDiv.textContent = logEntry;
             container.appendChild(logDiv);
         });
+        
+        // 스크롤을 맨 아래로
+        container.scrollTop = container.scrollHeight;
     }
 
-    // 현재 턴 표시 업데이트
+    // 현재 차례 표시 업데이트
     updateCurrentTurn() {
+        const currentPlayerElement = document.getElementById('current-player');
+        
+        if (!game || !currentPlayerElement) {
+            return;
+        }
+        
         const currentPlayer = game.getCurrentPlayer();
-        document.getElementById('current-player').textContent = currentPlayer.name;
+        if (currentPlayer) {
+            currentPlayerElement.textContent = currentPlayer.name;
+            
+            // 내 차례인지 표시
+            if (currentPlayer.id === this.playerId) {
+                currentPlayerElement.style.fontWeight = 'bold';
+                currentPlayerElement.style.color = '#007bff';
+            } else {
+                currentPlayerElement.style.fontWeight = 'normal';
+                currentPlayerElement.style.color = '#333';
+            }
+        }
     }
 
     // 피난처 표시 업데이트 (확장판)

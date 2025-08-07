@@ -397,6 +397,25 @@ button:disabled {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.character-description {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 5px;
+    line-height: 1.2;
+}
+
+.log-entry {
+    padding: 5px 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+    color: #4a5568;
+    text-align: left;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
 .character-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
