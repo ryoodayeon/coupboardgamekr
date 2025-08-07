@@ -6,10 +6,55 @@ class CoupApp {
         this.nickname = '';
         this.currentRoom = null;
         this.playerId = this.generatePlayerId();
+        this.isOnline = false;
         
+        this.initializeOnlineFeatures();
         this.initializeEventListeners();
         this.checkURLForRoomCode();
         this.showScreen('nickname-screen');
+        
+        // 전역 참조 설정 (Firebase 콜백용)
+        window.coupApp = this;
+    }
+
+    // 온라인 기능 초기화
+    initializeOnlineFeatures() {
+        // Firebase 초기화 시도
+        setTimeout(() => {
+            const firebaseInitialized = initializeFirebase();
+            this.isOnline = firebaseInitialized;
+            
+            if (firebaseInitialized) {
+                onlineRoomManager = new OnlineRoomManager();
+                this.updateConnectionStatus('online', '🌐 온라인 모드 (전세계 플레이 가능!)');
+            } else {
+                this.updateConnectionStatus('offline', '💻 로컬 모드 (같은 기기에서만 플레이)');
+            }
+        }, 1000);
+    }
+
+    // 연결 상태 업데이트
+    updateConnectionStatus(status, message) {
+        const statusElement = document.getElementById('connection-status');
+        const indicatorElement = document.getElementById('status-indicator');
+        const textElement = document.getElementById('status-text');
+        
+        if (statusElement && indicatorElement && textElement) {
+            statusElement.className = `connection-status ${status}`;
+            textElement.textContent = message;
+            
+            switch (status) {
+                case 'online':
+                    indicatorElement.textContent = '🌐';
+                    break;
+                case 'offline':
+                    indicatorElement.textContent = '💻';
+                    break;
+                case 'connecting':
+                    indicatorElement.textContent = '🔄';
+                    break;
+            }
+        }
     }
 
     // 고유 플레이어 ID 생성
@@ -175,12 +220,20 @@ class CoupApp {
     }
 
     // 방 생성
-    createRoom() {
+    async createRoom() {
         const gameMode = document.querySelector('input[name="game-mode"]:checked').value;
         
         try {
-            const roomCode = roomManager.createRoom(this.playerId, this.nickname, gameMode);
-            this.currentRoom = roomManager.getRoom(roomCode);
+            let roomCode;
+            
+            if (this.isOnline && onlineRoomManager) {
+                roomCode = await onlineRoomManager.createRoom(this.playerId, this.nickname, gameMode);
+                this.currentRoom = await onlineRoomManager.getRoom(roomCode);
+            } else {
+                roomCode = roomManager.createRoom(this.playerId, this.nickname, gameMode);
+                this.currentRoom = roomManager.getRoom(roomCode);
+            }
+            
             game.myPlayerId = this.playerId;
             
             // URL 업데이트
@@ -188,30 +241,46 @@ class CoupApp {
             window.history.pushState({}, '', newUrl);
             
             this.showWaitingRoom();
-            this.showNotification(`방이 생성되었습니다! 코드: ${roomCode}`, 'success');
+            
+            const modeText = this.isOnline ? '(온라인 멀티플레이)' : '(로컬)';
+            this.showNotification(`방이 생성되었습니다! 코드: ${roomCode} ${modeText}`, 'success');
         } catch (error) {
+            console.error('방 생성 오류:', error);
             this.showNotification('방 생성에 실패했습니다.', 'error');
         }
     }
 
     // 방 입장
-    joinRoom() {
+    async joinRoom() {
         const roomCode = document.getElementById('room-code-input').value.trim().toUpperCase();
         
-        const result = roomManager.joinRoom(roomCode, this.playerId, this.nickname);
-        
-        if (result.success) {
-            this.currentRoom = result.room;
-            game.myPlayerId = this.playerId;
+        try {
+            let result;
             
-            // URL 업데이트
-            const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
-            window.history.pushState({}, '', newUrl);
+            if (this.isOnline && onlineRoomManager) {
+                result = await onlineRoomManager.joinRoom(roomCode, this.playerId, this.nickname);
+            } else {
+                result = roomManager.joinRoom(roomCode, this.playerId, this.nickname);
+            }
             
-            this.showWaitingRoom();
-            this.showNotification('방에 입장했습니다!', 'success');
-        } else {
-            this.showError('join-error', result.message);
+            if (result.success) {
+                this.currentRoom = result.room;
+                game.myPlayerId = this.playerId;
+                
+                // URL 업데이트
+                const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+                window.history.pushState({}, '', newUrl);
+                
+                this.showWaitingRoom();
+                
+                const modeText = this.isOnline ? '(온라인)' : '(로컬)';
+                this.showNotification(`방에 입장했습니다! ${modeText}`, 'success');
+            } else {
+                this.showError('join-error', result.message);
+            }
+        } catch (error) {
+            console.error('방 입장 오류:', error);
+            this.showError('join-error', '방 입장에 실패했습니다.');
         }
     }
 
@@ -972,6 +1041,39 @@ class CoupApp {
         }
         
         document.body.removeChild(textArea);
+    }
+
+    // 실시간 방 상태 업데이트 (Firebase 콜백)
+    onRoomUpdated(room) {
+        if (!room || !this.currentRoom || room.code !== this.currentRoom.code) return;
+        
+        const oldPlayerCount = this.currentRoom.players ? this.currentRoom.players.length : 0;
+        const newPlayerCount = room.players ? room.players.length : 0;
+        
+        this.currentRoom = room;
+        
+        // 플레이어 수 변화 알림
+        if (newPlayerCount > oldPlayerCount) {
+            const newPlayer = room.players[room.players.length - 1];
+            if (newPlayer.id !== this.playerId) {
+                this.showNotification(`${newPlayer.name}님이 입장했습니다! 👋`, 'success');
+            }
+        } else if (newPlayerCount < oldPlayerCount) {
+            this.showNotification('플레이어가 나갔습니다. 👋', 'warning');
+        }
+        
+        // 게임 시작 알림
+        if (room.status === 'playing' && this.currentScreen === 'waiting-room') {
+            this.showNotification('게임이 시작됩니다! 🎮', 'success');
+            setTimeout(() => {
+                this.showGameScreen();
+            }, 1000);
+        }
+        
+        // UI 업데이트
+        if (this.currentScreen === 'waiting-room') {
+            this.updatePlayersList();
+        }
     }
 
     // 알림 표시

@@ -141,6 +141,32 @@ button:disabled {
     color: #4a5568;
 }
 
+/* 연결 상태 */
+.connection-status {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-indicator {
+    font-size: 1rem;
+}
+
+.connection-status.online {
+    color: #38a169;
+}
+
+.connection-status.offline {
+    color: #e53e3e;
+}
+
+.connection-status.connecting {
+    color: #d69e2e;
+}
+
 /* 게임 모드 선택 */
 .game-mode-selection {
     background: white;

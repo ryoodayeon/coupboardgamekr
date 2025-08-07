@@ -20,6 +20,10 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -43,6 +47,10 @@
         <div class="container">
             <div class="user-info">
                 <span id="current-nickname"></span>님 환영합니다!
+                <div class="connection-status" id="connection-status">
+                    <span class="status-indicator" id="status-indicator">🔄</span>
+                    <span id="status-text">연결 확인 중...</span>
+                </div>
             </div>
             <div class="menu-buttons">
                 <button id="create-room-btn" class="menu-btn">
@@ -244,6 +252,7 @@
 
     <script src="game-data.js"></script>
     <script src="game-logic.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
