@@ -1,16 +1,15 @@
 // Firebase 설정 및 실시간 데이터베이스 연동
 
-// Firebase 초기화 (사용자가 직접 설정해야 함)
+// Firebase 초기화 (실제 설정값)
 const firebaseConfig = {
-    // 여기에 Firebase 프로젝트 설정을 입력하세요
-    // Firebase Console에서 프로젝트 생성 후 설정값 복사
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com/",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBkAygqR6tP_cLKCyfe4yVyExhL1hopYh0",
+    authDomain: "coupboardgamekr.firebaseapp.com",
+    databaseURL: "https://coupboardgamekr-default-rtdb.firebaseio.com",
+    projectId: "coupboardgamekr",
+    storageBucket: "coupboardgamekr.firebasestorage.app",
+    messagingSenderId: "476698707291",
+    appId: "1:476698707291:web:ec634f83754727172d467e",
+    measurementId: "G-EJVZ9SLZ2K"
 };
 
 // Firebase가 로드되었는지 확인
