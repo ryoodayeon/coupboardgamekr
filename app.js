@@ -418,6 +418,36 @@ class CoupApp {
         this.showScreen('game-screen');
         this.updateGameUI();
         this.setupGameEventListeners();
+        
+        // 첫 번째 플레이어라면 시작 팝업 표시
+        if (game && game.gamePhase === 'starting' && game.firstPlayer && game.firstPlayer.id === this.playerId) {
+            this.showStartPopup();
+        }
+    }
+    
+    // 게임 시작 팝업 표시
+    showStartPopup() {
+        const modal = document.getElementById('game-start-modal');
+        if (modal) {
+            modal.style.display = 'block';
+            
+            // 시작 버튼 이벤트 리스너
+            const startBtn = document.getElementById('start-game-popup-btn');
+            if (startBtn) {
+                startBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    this.startActualGame();
+                };
+            }
+        }
+    }
+    
+    // 실제 게임 시작
+    startActualGame() {
+        if (game && game.startActualGame()) {
+            this.updateGameUI();
+            this.showNotification('게임이 시작되었습니다!', 'success');
+        }
     }
 
     // 게임 이벤트 리스너 설정
@@ -939,7 +969,7 @@ class CoupApp {
         // 내 코인 표시 업데이트
         const myPlayer = game.getMyPlayer();
         if (myPlayer) {
-            document.getElementById('my-coin-count').textContent = myPlayer.coins;
+            this.updateCoinDisplay(myPlayer.coins);
         }
     }
 
@@ -971,8 +1001,14 @@ class CoupApp {
             cardDiv.className = 'character-card';
             cardDiv.dataset.cardId = cardId;
             
+            // 이미지가 있으면 이미지 사용, 없으면 아이콘 사용
+            const imageHtml = character.image ? 
+                `<img src="${character.image}" alt="${character.name}" class="character-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                 <div class="character-icon" style="display: none;">${character.icon}</div>` :
+                `<div class="character-icon">${character.icon}</div>`;
+            
             cardDiv.innerHTML = `
-                <div class="character-icon">${character.icon}</div>
+                ${imageHtml}
                 <div class="character-name">${character.name}</div>
                 <div class="character-description">${character.actionDescription}</div>
             `;
@@ -984,6 +1020,43 @@ class CoupApp {
             
             container.appendChild(cardDiv);
         });
+    }
+    
+    // 코인 표시 업데이트
+    updateCoinDisplay(coinCount) {
+        const coinContainer = document.getElementById('coin-container');
+        const coinCountElement = document.getElementById('my-coin-count');
+        
+        if (coinCountElement) {
+            coinCountElement.textContent = coinCount;
+        }
+        
+        if (coinContainer) {
+            coinContainer.innerHTML = '';
+            
+            // 코인 이미지 또는 아이콘으로 표시 (최대 10개까지만 표시)
+            const displayCount = Math.min(coinCount, 10);
+            for (let i = 0; i < displayCount; i++) {
+                const coinDiv = document.createElement('div');
+                coinDiv.className = 'coin-item';
+                
+                if (GAME_CONFIG.COIN_IMAGE) {
+                    coinDiv.innerHTML = `<img src="${GAME_CONFIG.COIN_IMAGE}" alt="코인" class="coin-image" onerror="this.outerHTML='🪙';">`;
+                } else {
+                    coinDiv.innerHTML = '🪙';
+                }
+                
+                coinContainer.appendChild(coinDiv);
+            }
+            
+            // 10개 이상이면 +표시
+            if (coinCount > 10) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'coin-more';
+                moreDiv.textContent = `+${coinCount - 10}`;
+                coinContainer.appendChild(moreDiv);
+            }
+        }
     }
 
     // 행동 로그 업데이트

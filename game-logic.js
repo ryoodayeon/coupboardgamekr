@@ -24,39 +24,45 @@ class CoupGame {
 
     // 게임 초기화
     initializeGame(players, gameMode = 'basic') {
-        this.players = players.map((player, index) => ({
+        // 플레이어 순서 랜덤 섞기
+        const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
+        
+        this.players = shuffledPlayers.map((player, index) => ({
             id: player.id,
             name: player.name,
             cards: [],
             coins: GAME_CONFIG.STARTING_COINS,
             isAlive: true,
-            isHost: index === 0,
-            religion: gameMode === 'expansion' ? (index % 2 === 0 ? 'catholic' : 'protestant') : null
+            isHost: player.id === players[0].id, // 원래 호스트 유지
+            religion: gameMode === 'expansion' ? (index % 2 === 0 ? 'catholic' : 'protestant') : null,
+            turnOrder: index
         }));
         
         this.gameMode = gameMode;
         this.currentPlayerIndex = 0;
-        this.gamePhase = 'playing';
+        this.gamePhase = 'starting'; // 시작 단계 추가
         this.sanctuary = 0;
-        this.host = this.players[0].id;
+        this.host = players[0].id;
+        this.firstPlayer = shuffledPlayers[0]; // 첫 번째 플레이어 저장
         
         this.createDeck();
         this.dealCards();
         this.shuffleDeck();
         
         this.logAction(`게임이 시작되었습니다! (${gameMode === 'expansion' ? '확장판' : '기본판'})`);
-        this.logAction(`${this.getCurrentPlayer().name}님의 차례입니다.`);
+        this.logAction(`플레이어 순서: ${this.players.map(p => p.name).join(' → ')}`);
+        this.logAction(`${this.firstPlayer.name}님이 첫 번째 차례입니다!`);
     }
 
-    // 덱 생성
+    // 덱 생성 (기본판: 각 캐릭터 3장씩 총 15장)
     createDeck() {
         this.deck = [];
         
         if (this.gameMode === 'basic') {
-            // 기본판: 각 캐릭터 3장씩
+            // 기본판: 공작, 암살자, 대사, 사령관, 백작부인 각 3장씩
             Object.keys(CHARACTERS).forEach(charId => {
                 if (charId !== 'INQUISITOR') { // 확장판 캐릭터 제외
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < GAME_CONFIG.CARDS_PER_CHARACTER; i++) {
                         this.deck.push(charId.toLowerCase());
                     }
                 }
@@ -65,7 +71,7 @@ class CoupGame {
             // 확장판: 대사 대신 종교재판관
             Object.keys(CHARACTERS).forEach(charId => {
                 if (charId !== 'AMBASSADOR') { // 대사 제외
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < GAME_CONFIG.CARDS_PER_CHARACTER; i++) {
                         this.deck.push(charId.toLowerCase());
                     }
                 }
@@ -73,6 +79,7 @@ class CoupGame {
         }
         
         this.shuffleDeck();
+        console.log(`덱 생성 완료: 총 ${this.deck.length}장 (${this.gameMode})`);
     }
 
     // 덱 셔플
@@ -113,6 +120,16 @@ class CoupGame {
     // 내 플레이어 정보 가져오기
     getMyPlayer() {
         return this.getPlayerById(this.myPlayerId);
+    }
+
+    // 게임 실제 시작 (첫 플레이어가 시작 버튼 클릭 후)
+    startActualGame() {
+        if (this.gamePhase === 'starting') {
+            this.gamePhase = 'playing';
+            this.logAction(`게임이 본격적으로 시작됩니다!`);
+            return true;
+        }
+        return false;
     }
 
     // 다음 차례로 넘기기

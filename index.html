@@ -75,8 +75,8 @@
                 <div class="mode-toggle">
                     <input type="radio" id="basic-mode" name="game-mode" value="basic" checked>
                     <label for="basic-mode">기본판</label>
-                    <input type="radio" id="expansion-mode" name="game-mode" value="expansion">
-                    <label for="expansion-mode">확장판</label>
+                    <input type="radio" id="expansion-mode" name="game-mode" value="expansion" disabled>
+                    <label for="expansion-mode" class="disabled-label">확장판 (Coming Soon! 🚧)</label>
                 </div>
             </div>
             <button id="create-room-confirm" class="primary-btn">방 만들기</button>
@@ -213,7 +213,11 @@
                     <div id="my-cards-container"></div>
                 </div>
                 <div class="my-coins">
-                    <h3>내 코인: <span id="my-coin-count">2</span>개</h3>
+                    <h3>내 코인</h3>
+                    <div class="coin-display">
+                        <div id="coin-container"></div>
+                        <span id="my-coin-count">2</span>개
+                    </div>
                 </div>
                 <div class="game-controls">
                     <button id="help-btn" class="help-btn">❓ 도움말</button>
@@ -235,6 +239,18 @@
             <div class="game-end-controls">
                 <button id="play-again-btn" class="primary-btn">🌀 다시 한 번</button>
                 <button id="leave-game-btn" class="secondary-btn">🚪 방 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 시작 팝업 -->
+    <div id="game-start-modal" class="modal" style="display: none;">
+        <div class="modal-content start-modal">
+            <div class="start-popup">
+                <h2>🎮 게임 시작!</h2>
+                <p>당신이 첫 번째 플레이어입니다.</p>
+                <p>준비되셨으면 아래 버튼을 클릭하세요!</p>
+                <button id="start-game-popup-btn" class="primary-btn">시작하기! 🚀</button>
             </div>
         </div>
     </div>

@@ -9,7 +9,10 @@ const GAME_CONFIG = {
     COUP_COST: 7,
     ASSASSINATION_COST: 3,
     MAX_COINS_BEFORE_COUP: 10,
-    ROOM_CODE_LENGTH: 6
+    ROOM_CODE_LENGTH: 6,
+    CARDS_PER_CHARACTER: 3, // 각 캐릭터당 카드 수
+    COIN_IMAGE: 'images/cards/coin.png',
+    CARD_BACK_IMAGE: 'images/cards/card-back.png'
 };
 
 // 캐릭터 정보
@@ -18,6 +21,7 @@ const CHARACTERS = {
         id: 'duke',
         name: '공작',
         icon: '👑',
+        image: 'images/cards/duke.png',
         description: '세금 징수 및 해외 원조 차단',
         actions: ['tax'],
         blocks: ['foreign_aid'],
@@ -28,6 +32,7 @@ const CHARACTERS = {
         id: 'assassin',
         name: '암살자',
         icon: '🔪',
+        image: 'images/cards/assassin.png',
         description: '다른 플레이어 암살',
         actions: ['assassinate'],
         blocks: [],
@@ -38,6 +43,7 @@ const CHARACTERS = {
         id: 'ambassador',
         name: '대사',
         icon: '🛡️',
+        image: 'images/cards/ambassador.png',
         description: '카드 교환 및 갈취 방어',
         actions: ['exchange'],
         blocks: ['steal'],
@@ -48,6 +54,7 @@ const CHARACTERS = {
         id: 'captain',
         name: '사령관',
         icon: '🕵️',
+        image: 'images/cards/captain.png',
         description: '다른 플레이어에게서 갈취',
         actions: ['steal'],
         blocks: ['steal'],
@@ -58,6 +65,7 @@ const CHARACTERS = {
         id: 'contessa',
         name: '백작부인',
         icon: '🧱',
+        image: 'images/cards/contessa.png',
         description: '암살 방어',
         actions: [],
         blocks: ['assassinate'],
