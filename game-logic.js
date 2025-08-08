@@ -92,14 +92,24 @@ class CoupGame {
 
     // 카드 배분
     dealCards() {
-        this.players.forEach(player => {
+        console.log('🃏 카드 배분 시작');
+        console.log('📦 덱 상태:', this.deck.length, '장');
+        
+        this.players.forEach((player, index) => {
             player.cards = [];
             for (let i = 0; i < GAME_CONFIG.STARTING_CARDS; i++) {
                 if (this.deck.length > 0) {
-                    player.cards.push(this.deck.pop());
+                    const card = this.deck.pop();
+                    player.cards.push(card);
+                    console.log(`👤 ${player.name}에게 ${card} 카드 배분`);
+                } else {
+                    console.error('❌ 덱에 카드가 부족합니다!');
                 }
             }
+            console.log(`✅ ${player.name}: ${player.cards.length}장 (${player.cards.join(', ')})`);
         });
+        
+        console.log('🃏 카드 배분 완료. 남은 덱:', this.deck.length, '장');
     }
 
     // 현재 플레이어 가져오기

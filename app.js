@@ -380,7 +380,16 @@ class CoupApp {
                     // 온라인에서는 Firebase 리스너가 자동으로 게임 화면으로 전환
                 } else {
                     // 로컬 모드에서는 직접 게임 시작
-                    Object.assign(game, result.game);
+                    console.log('🎮 로컬 게임 시작:', result);
+                    
+                    if (result.game) {
+                        // 게임 데이터를 전역 game 객체에 복사
+                        Object.assign(game, result.game);
+                        console.log('📋 게임 데이터 복사 완료:', game);
+                    } else {
+                        console.error('❌ result.game이 없습니다:', result);
+                    }
+                    
                     this.showGameScreen();
                     this.showNotification('게임이 시작되었습니다!', 'success');
                 }
@@ -410,9 +419,16 @@ class CoupApp {
 
     // 게임 화면 표시
     showGameScreen() {
+        console.log('🎮 게임 화면 표시 시작');
+        console.log('🆔 내 플레이어 ID:', this.playerId);
+        console.log('🎯 게임 객체:', game);
+        
         // 게임 로직에 내 플레이어 ID 설정
         if (game && this.playerId) {
             game.myPlayerId = this.playerId;
+            console.log('✅ myPlayerId 설정 완료:', game.myPlayerId);
+        } else {
+            console.error('❌ 게임 객체 또는 플레이어 ID가 없습니다!');
         }
         
         this.showScreen('game-screen');
@@ -421,7 +437,15 @@ class CoupApp {
         
         // 첫 번째 플레이어라면 시작 팝업 표시
         if (game && game.gamePhase === 'starting' && game.firstPlayer && game.firstPlayer.id === this.playerId) {
+            console.log('🎊 첫 번째 플레이어 시작 팝업 표시');
             this.showStartPopup();
+        } else {
+            console.log('ℹ️ 시작 팝업 조건 미충족:', {
+                hasGame: !!game,
+                gamePhase: game?.gamePhase,
+                firstPlayer: game?.firstPlayer?.id,
+                myId: this.playerId
+            });
         }
     }
     
@@ -916,12 +940,28 @@ class CoupApp {
 
     // 게임 UI 업데이트
     updateGameUI() {
+        console.log('🎮 게임 UI 업데이트 시작', game);
+        
+        if (!game || !game.players || game.players.length === 0) {
+            console.error('❌ 게임 데이터가 없습니다!');
+            return;
+        }
+        
+        console.log('📊 게임 상태:', {
+            phase: game.gamePhase,
+            players: game.players.length,
+            myPlayerId: game.myPlayerId,
+            currentPlayer: game.getCurrentPlayer()?.name
+        });
+        
         this.updatePlayersDisplay();
         this.updateMyCards();
         this.updateActionLog();
         this.updateActionButtons();
         this.updateCurrentTurn();
         this.updateSanctuaryDisplay();
+        
+        console.log('✅ 게임 UI 업데이트 완료');
     }
 
     // 플레이어 표시 업데이트
@@ -969,7 +1009,18 @@ class CoupApp {
         // 내 코인 표시 업데이트
         const myPlayer = game.getMyPlayer();
         if (myPlayer) {
+            console.log('🪙 코인 업데이트:', myPlayer.coins);
             this.updateCoinDisplay(myPlayer.coins);
+        } else {
+            console.warn('⚠️ 내 플레이어를 찾을 수 없어서 코인 업데이트 불가');
+            // 임시로 기본값 표시
+            if (game.players && game.players.length > 0) {
+                const tempPlayer = game.players.find(p => p.id === game.myPlayerId) || game.players[0];
+                if (tempPlayer) {
+                    console.log('🔄 임시 플레이어 코인 사용:', tempPlayer.coins);
+                    this.updateCoinDisplay(tempPlayer.coins);
+                }
+            }
         }
     }
 
@@ -977,23 +1028,51 @@ class CoupApp {
     updateMyCards() {
         const container = document.getElementById('my-cards-container');
         
+        console.log('🃏 내 카드 업데이트 시작');
+        
+        if (!container) {
+            console.error('❌ my-cards-container를 찾을 수 없습니다!');
+            return;
+        }
+        
         if (!game || !game.getMyPlayer) {
-            console.warn('게임 또는 플레이어 데이터가 없습니다.');
+            console.warn('⚠️ 게임 또는 getMyPlayer 메서드가 없습니다.');
             return;
         }
         
         const myPlayer = game.getMyPlayer();
-        if (!myPlayer || !myPlayer.cards) {
-            console.warn('내 플레이어 데이터가 없습니다.');
+        console.log('👤 내 플레이어:', myPlayer);
+        
+        if (!myPlayer) {
+            console.warn('⚠️ 내 플레이어 데이터가 없습니다. myPlayerId:', game.myPlayerId);
+            // 임시로 첫 번째 플레이어를 사용 (테스트용)
+            if (game.players && game.players.length > 0) {
+                const tempPlayer = game.players.find(p => p.id === game.myPlayerId) || game.players[0];
+                console.log('🔄 임시 플레이어 사용:', tempPlayer);
+                this.displayPlayerCards(tempPlayer, container);
+            }
             return;
         }
 
+        if (!myPlayer.cards || myPlayer.cards.length === 0) {
+            console.warn('⚠️ 내 카드가 없습니다. 카드를 배분해야 합니다.');
+            container.innerHTML = '<p>카드를 배분 중입니다...</p>';
+            return;
+        }
+
+        this.displayPlayerCards(myPlayer, container);
+    }
+    
+    // 플레이어 카드 표시 헬퍼 함수
+    displayPlayerCards(player, container) {
         container.innerHTML = '';
         
-        myPlayer.cards.forEach((cardId, index) => {
+        console.log(`🃏 ${player.name}의 카드 표시:`, player.cards);
+        
+        player.cards.forEach((cardId, index) => {
             const character = CHARACTERS[cardId.toUpperCase()];
             if (!character) {
-                console.warn(`캐릭터 정보를 찾을 수 없습니다: ${cardId}`);
+                console.warn(`❌ 캐릭터 정보를 찾을 수 없습니다: ${cardId}`);
                 return;
             }
             
@@ -1013,13 +1092,15 @@ class CoupApp {
                 <div class="character-description">${character.actionDescription}</div>
             `;
             
-            // 카드 클릭 시 해당 캐릭터 능력 사용 (나중에 구현)
+            // 카드 클릭 시 해당 캐릭터 능력 사용
             cardDiv.addEventListener('click', () => {
                 this.selectCharacterCard(cardId);
             });
             
             container.appendChild(cardDiv);
         });
+        
+        console.log(`✅ ${player.cards.length}장의 카드 표시 완료`);
     }
     
     // 코인 표시 업데이트
@@ -1027,15 +1108,19 @@ class CoupApp {
         const coinContainer = document.getElementById('coin-container');
         const coinCountElement = document.getElementById('my-coin-count');
         
+        console.log('🪙 코인 표시 업데이트:', coinCount);
+        
         if (coinCountElement) {
-            coinCountElement.textContent = coinCount;
+            coinCountElement.textContent = coinCount || 0;
         }
         
         if (coinContainer) {
             coinContainer.innerHTML = '';
             
+            const displayCoins = coinCount || 0;
+            
             // 코인 이미지 또는 아이콘으로 표시 (최대 10개까지만 표시)
-            const displayCount = Math.min(coinCount, 10);
+            const displayCount = Math.min(displayCoins, 10);
             for (let i = 0; i < displayCount; i++) {
                 const coinDiv = document.createElement('div');
                 coinDiv.className = 'coin-item';
@@ -1050,12 +1135,14 @@ class CoupApp {
             }
             
             // 10개 이상이면 +표시
-            if (coinCount > 10) {
+            if (displayCoins > 10) {
                 const moreDiv = document.createElement('div');
                 moreDiv.className = 'coin-more';
-                moreDiv.textContent = `+${coinCount - 10}`;
+                moreDiv.textContent = `+${displayCoins - 10}`;
                 coinContainer.appendChild(moreDiv);
             }
+            
+            console.log(`✅ ${displayCount}개 코인 표시 완료`);
         }
     }
 
