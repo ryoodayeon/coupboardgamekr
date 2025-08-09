@@ -230,12 +230,22 @@ class OnlineRoomManager {
                 return { success: false, message: '최소 2명의 플레이어가 필요합니다.' };
             }
 
-            // 게임 상태 업데이트
+            // 게임 로직 초기화
+            const gameInstance = new CoupGame();
+            gameInstance.initializeGame(room.players, room.gameMode);
+            
+            console.log('🎮 Firebase 게임 로직 초기화 완료:', gameInstance);
+            console.log('👥 플레이어 목록:', gameInstance.players.map(p => ({name: p.name, cards: p.cards.length})));
+            
+            // 게임 상태를 Firebase에 저장
+            const gameState = gameInstance.getGameState();
             await database.ref(`rooms/${roomCode}/status`).set('playing');
+            await database.ref(`rooms/${roomCode}/game`).set(gameState);
             await database.ref(`rooms/${roomCode}/lastActivity`).set(Date.now());
+            
+            console.log('🔥 Firebase에 게임 데이터 저장 완료');
 
-            // 게임 로직 초기화는 각 클라이언트에서 처리
-            return { success: true, room: room };
+            return { success: true, room: { ...room, game: gameInstance } };
         } catch (error) {
             console.error('온라인 게임 시작 실패:', error);
             return { success: false, message: '게임 시작에 실패했습니다.' };

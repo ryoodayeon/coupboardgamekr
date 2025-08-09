@@ -1391,6 +1391,20 @@ class CoupApp {
         
         // 게임 시작 알림
         if (room.status === 'playing' && this.currentScreen === 'waiting-room') {
+            console.log('🔥 Firebase에서 게임 시작 신호 받음:', room);
+            
+            // Firebase에서 받은 게임 데이터를 로컬 game 객체에 복사
+            if (room.game) {
+                console.log('📋 Firebase 게임 데이터를 로컬에 복사:', room.game);
+                Object.assign(game, room.game);
+                
+                // myPlayerId 설정
+                game.myPlayerId = this.playerId;
+                console.log('✅ 온라인 게임 데이터 복사 완료. 플레이어 수:', game.players?.length);
+            } else {
+                console.error('❌ Firebase room.game 데이터가 없습니다!');
+            }
+            
             this.showNotification('게임이 시작됩니다! 🎮', 'success');
             setTimeout(() => {
                 this.showGameScreen();
