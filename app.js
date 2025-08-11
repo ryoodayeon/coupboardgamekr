@@ -632,6 +632,78 @@ class CoupApp {
         targetSelection.style.display = 'block';
     }
 
+    // 캐릭터 선택 UI 표시
+    showCharacterSelection() {
+        const myPlayer = game.getMyPlayer();
+        if (!myPlayer || !myPlayer.cards) {
+            this.showNotification('내 카드 정보를 찾을 수 없습니다.', 'error');
+            return;
+        }
+
+        const characterSelection = document.getElementById('character-selection');
+        const characterButtons = document.getElementById('character-buttons');
+        
+        characterButtons.innerHTML = '';
+        
+        // 내가 가진 카드들로 캐릭터 선택 버튼 생성
+        myPlayer.cards.forEach(cardId => {
+            const character = CHARACTERS[cardId.toUpperCase()];
+            if (!character || !character.actions || character.actions.length === 0) {
+                return; // 행동이 없는 캐릭터는 제외
+            }
+            
+            const button = document.createElement('button');
+            button.className = 'character-btn';
+            
+            // 캐릭터별 행동 정보 표시
+            const actionName = character.actions[0]; // 첫 번째 행동
+            const actionInfo = this.getActionInfo(actionName);
+            
+            button.innerHTML = `
+                <div class="character-action-info">
+                    <div class="character-header">
+                        <span class="character-icon">${character.icon}</span>
+                        <strong>${character.name}</strong>
+                    </div>
+                    <div class="action-detail">${actionInfo}</div>
+                </div>
+            `;
+            
+            button.onclick = () => {
+                characterSelection.style.display = 'none';
+                this.executeBasicAction(actionName);
+            };
+            
+            characterButtons.appendChild(button);
+        });
+        
+        // 취소 버튼 추가
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'character-btn cancel-btn';
+        cancelButton.innerHTML = `
+            <div class="character-action-info">
+                <div class="action-detail">❌ 취소</div>
+            </div>
+        `;
+        cancelButton.onclick = () => {
+            characterSelection.style.display = 'none';
+        };
+        characterButtons.appendChild(cancelButton);
+        
+        characterSelection.style.display = 'block';
+    }
+
+    // 행동 정보 가져오기
+    getActionInfo(actionName) {
+        const actionInfos = {
+            'tax': '세금: 🪙 3코인 획득',
+            'assassinate': '암살: 🪙 3코인 지불, 💀 상대 카드 제거',
+            'steal': '강탈: 🪙 상대에게서 최대 2코인 강탈',
+            'exchange': '교환: 🔄 덱에서 2장 보고 카드 교체'
+        };
+        return actionInfos[actionName] || actionName;
+    }
+
     // 다른 플레이어들에게 행동 대응 팝업 표시
     showActionToOtherPlayers(action, targetId, waitingFor) {
         const actionData = {
@@ -807,7 +879,19 @@ class CoupApp {
         }
 
         // 기본 행동들 처리
-        if (['income', 'foreign-aid', 'coup', 'tax', 'assassinate', 'steal', 'exchange'].includes(action)) {
+        if (['income', 'foreign-aid', 'coup'].includes(action)) {
+            this.executeBasicAction(action);
+            return;
+        }
+        
+        // 캐릭터 능력 사용
+        if (action === 'character-action') {
+            this.showCharacterSelection();
+            return;
+        }
+        
+        // 특정 캐릭터 행동들 처리
+        if (['tax', 'assassinate', 'steal', 'exchange'].includes(action)) {
             this.executeBasicAction(action);
             return;
         }
