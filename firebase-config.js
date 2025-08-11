@@ -277,6 +277,50 @@ class OnlineRoomManager {
         return result;
     }
 
+    // 게임 상태 업데이트
+    async updateGameState(gameState) {
+        if (!this.currentRoomCode) return;
+        
+        try {
+            await this.database.ref(`rooms/${this.currentRoomCode}/game`).set(gameState);
+            console.log('🔄 Firebase 게임 상태 업데이트 완료');
+        } catch (error) {
+            console.error('❌ Firebase 게임 상태 업데이트 실패:', error);
+            throw error;
+        }
+    }
+
+    // 행동 대응 브로드캐스트
+    async broadcastActionResponse(actionData) {
+        if (!this.currentRoomCode) return;
+        
+        try {
+            // 행동 데이터를 임시 컬렉션에 저장
+            await this.database.ref(`rooms/${this.currentRoomCode}/pendingActions`).push({
+                ...actionData,
+                timestamp: Date.now()
+            });
+            console.log('📢 행동 대응 요청 브로드캐스트:', actionData);
+        } catch (error) {
+            console.error('❌ 행동 대응 브로드캐스트 실패:', error);
+        }
+    }
+
+    // 행동 응답 전송
+    async sendActionResponse(responseData) {
+        if (!this.currentRoomCode) return;
+        
+        try {
+            await this.database.ref(`rooms/${this.currentRoomCode}/actionResponses`).push({
+                ...responseData,
+                timestamp: Date.now()
+            });
+            console.log('📤 행동 응답 전송:', responseData);
+        } catch (error) {
+            console.error('❌ 행동 응답 전송 실패:', error);
+        }
+    }
+
     // 연결 상태 확인
     isConnected() {
         return this.isOnline;

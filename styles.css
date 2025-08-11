@@ -352,45 +352,52 @@ button:disabled {
 /* 행동 버튼 */
 .action-buttons, .character-buttons, .target-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-    margin-top: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    padding: 0 10px;
 }
 
 .action-btn, .character-btn, .target-btn {
-    padding: 15px;
-    background: #f7fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    color: #4a5568;
+    padding: 20px 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 15px;
     font-weight: bold;
+    font-size: 1.1rem;
     transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    text-align: center;
 }
 
 .action-btn:hover, .character-btn:hover, .target-btn:hover {
-    background: #edf2f7;
-    border-color: #4299e1;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
 
 .action-btn:disabled, .character-btn:disabled, .target-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    background: #cbd5e0;
+    box-shadow: none;
 }
 
 /* 캐릭터 카드 */
 .character-card {
     background: white;
     border: 3px solid #e2e8f0;
-    border-radius: 15px;
-    padding: 15px;
-    margin: 5px;
+    border-radius: 12px;
+    padding: 10px;
+    margin: 3px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 100px;
-    min-height: 140px;
+    min-width: 80px;
+    min-height: 110px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -398,10 +405,10 @@ button:disabled {
 }
 
 .character-description {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: #718096;
-    margin-top: 5px;
-    line-height: 1.2;
+    margin-top: 3px;
+    line-height: 1.1;
 }
 
 .log-entry {
@@ -434,16 +441,16 @@ button:disabled {
 }
 
 .character-icon {
-    font-size: 2.5rem;
-    margin-bottom: 8px;
+    font-size: 2rem;
+    margin-bottom: 5px;
 }
 
 .character-image {
-    width: 80px;
-    height: 120px;
+    width: 60px;
+    height: 90px;
     object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 8px;
+    border-radius: 6px;
+    margin-bottom: 5px;
 }
 
 .character-name {
@@ -976,4 +983,90 @@ input[type="radio"]:disabled + .disabled-label {
     padding: 15px;
     margin: 20px 0;
     border-radius: 0 8px 8px 0;
+}
+
+/* 행동 대응 팝업 */
+.action-response-popup {
+    max-width: 500px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 25px;
+}
+
+.action-response-popup h3 {
+    color: white;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+#action-response-details {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+.action-response-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.response-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+}
+
+.allow-btn {
+    background: #48bb78;
+    color: white;
+}
+
+.allow-btn:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+}
+
+.challenge-btn {
+    background: #e53e3e;
+    color: white;
+}
+
+.challenge-btn:hover {
+    background: #c53030;
+    transform: translateY(-2px);
+}
+
+.block-btn {
+    background: #ed8936;
+    color: white;
+}
+
+.block-btn:hover {
+    background: #dd6b20;
+    transform: translateY(-2px);
+}
+
+#response-timer {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+#timer-seconds {
+    color: #ffd700;
+    font-size: 1.2rem;
 }

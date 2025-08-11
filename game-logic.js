@@ -639,6 +639,93 @@ class CoupGame {
         }
     }
 
+    // 행동 이름 가져오기
+    getActionName(action, characterId = null) {
+        const actionNames = {
+            'income': '소득 (1코인)',
+            'foreign-aid': '해외 원조 (2코인)',
+            'coup': '쿠데타',
+            'tax': '세금 (공작)',
+            'assassinate': '암살 (암살자)',
+            'steal': '강탈 (사령관)',
+            'exchange': '교환 (대사)',
+            'block-foreign-aid': '해외원조 차단 (공작)',
+            'block-steal': '강탈 차단 (사령관/대사)',
+            'block-assassinate': '암살 차단 (백작부인)'
+        };
+        return actionNames[action] || action;
+    }
+
+    // 도전 가능한 행동인지 확인
+    isChallengeable(action) {
+        return ['tax', 'assassinate', 'steal', 'exchange'].includes(action);
+    }
+
+    // 차단 가능한 행동인지 확인
+    isBlockable(action) {
+        return ['foreign-aid', 'steal', 'assassinate'].includes(action);
+    }
+
+    // 행동 실행 (도전/차단 없이)
+    resolveAction() {
+        const action = this.currentAction;
+        const player = this.getPlayerById(action.playerId);
+        const target = action.targetId ? this.getPlayerById(action.targetId) : null;
+
+        let result = { success: true };
+
+        switch (action.type) {
+            case 'income':
+                player.coins += 1;
+                this.logAction(`${player.name}님이 소득으로 1코인을 얻었습니다.`);
+                break;
+
+            case 'foreign-aid':
+                player.coins += 2;
+                this.logAction(`${player.name}님이 해외원조로 2코인을 얻었습니다.`);
+                break;
+
+            case 'coup':
+                if (player.coins >= GAME_CONFIG.COUP_COST && target) {
+                    player.coins -= GAME_CONFIG.COUP_COST;
+                    result.eliminateCard = { playerId: target.id };
+                    this.logAction(`${player.name}님이 ${target.name}님에게 쿠데타를 실행했습니다!`);
+                }
+                break;
+
+            case 'tax':
+                player.coins += 3;
+                this.logAction(`${player.name}님이 공작의 능력으로 3코인을 얻었습니다.`);
+                break;
+
+            case 'assassinate':
+                if (player.coins >= 3 && target) {
+                    player.coins -= 3;
+                    result.eliminateCard = { playerId: target.id };
+                    this.logAction(`${player.name}님이 ${target.name}님을 암살했습니다!`);
+                }
+                break;
+
+            case 'steal':
+                if (target) {
+                    const stolen = Math.min(2, target.coins);
+                    target.coins -= stolen;
+                    player.coins += stolen;
+                    this.logAction(`${player.name}님이 ${target.name}님으로부터 ${stolen}코인을 강탈했습니다.`);
+                }
+                break;
+
+            case 'exchange':
+                result.exchange = { playerId: player.id };
+                this.logAction(`${player.name}님이 대사의 능력으로 카드를 교환합니다.`);
+                break;
+        }
+
+        this.currentAction = null;
+        this.nextTurn();
+        return result;
+    }
+
     // 게임 상태 가져오기
     getGameState() {
         return {

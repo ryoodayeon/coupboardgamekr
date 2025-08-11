@@ -263,6 +263,20 @@
         </div>
     </div>
 
+    <!-- 행동 대응 팝업 -->
+    <div id="action-response-modal" class="modal">
+        <div class="modal-content action-response-popup">
+            <h3 id="action-response-title">상대방이 행동을 했습니다!</h3>
+            <div id="action-response-details"></div>
+            <div class="action-response-buttons">
+                <button id="allow-action-btn" class="response-btn allow-btn">허용</button>
+                <button id="challenge-action-btn" class="response-btn challenge-btn">도전</button>
+                <button id="block-action-btn" class="response-btn block-btn">막기</button>
+            </div>
+            <div id="response-timer">⏰ 남은 시간: <span id="timer-seconds">15</span>초</div>
+        </div>
+    </div>
+
     <!-- 알림 팝업 -->
     <div id="notification" class="notification"></div>
 

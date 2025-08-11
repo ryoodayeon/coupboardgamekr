@@ -544,6 +544,204 @@ class CoupApp {
         this.showNotification('방어 기능은 추후 구현 예정입니다.', 'info');
     }
     
+    // 기본 행동 실행
+    async executeBasicAction(action) {
+        const currentPlayer = game.getCurrentPlayer();
+        let targetId = null;
+
+        // 타겟이 필요한 행동인지 확인
+        if (['coup', 'assassinate', 'steal'].includes(action)) {
+            targetId = await this.selectTarget(action);
+            if (!targetId) {
+                this.showNotification('타겟을 선택해야 합니다.', 'warning');
+                return;
+            }
+        }
+
+        console.log(`🎯 ${action} 실행:`, { action, targetId });
+
+        // 게임 로직에서 행동 실행
+        const result = game.executeAction(action, targetId);
+
+        if (!result.success) {
+            this.showNotification(result.message, 'error');
+            return;
+        }
+
+        // 도전 또는 차단 대기 상태라면 다른 플레이어들에게 팝업 표시
+        if (result.waitingFor) {
+            this.showActionToOtherPlayers(action, targetId, result.waitingFor);
+        } else {
+            // 즉시 실행되는 행동
+            this.showNotification(`${game.getActionName(action)}을(를) 실행했습니다!`, 'success');
+            this.updateGameUI();
+            this.syncGameState();
+        }
+    }
+
+    // 타겟 선택
+    async selectTarget(action) {
+        return new Promise((resolve) => {
+            const alivePlayers = game.getAlivePlayers().filter(p => p.id !== this.playerId);
+            
+            if (alivePlayers.length === 0) {
+                resolve(null);
+                return;
+            }
+
+            if (alivePlayers.length === 1) {
+                resolve(alivePlayers[0].id);
+                return;
+            }
+
+            // 여러 타겟이 있으면 선택 UI 표시
+            this.showTargetSelection(alivePlayers, resolve);
+        });
+    }
+
+    // 타겟 선택 UI 표시
+    showTargetSelection(players, callback) {
+        const targetSelection = document.getElementById('target-selection');
+        const targetButtons = document.getElementById('target-buttons');
+        
+        targetButtons.innerHTML = '';
+        
+        players.forEach(player => {
+            const button = document.createElement('button');
+            button.className = 'target-btn';
+            button.textContent = `${player.name} (💳${player.cards.length}장 🪙${player.coins}개)`;
+            button.onclick = () => {
+                targetSelection.style.display = 'none';
+                callback(player.id);
+            };
+            targetButtons.appendChild(button);
+        });
+        
+        targetSelection.style.display = 'block';
+    }
+
+    // 다른 플레이어들에게 행동 대응 팝업 표시
+    showActionToOtherPlayers(action, targetId, waitingFor) {
+        const actionData = {
+            action,
+            targetId,
+            waitingFor,
+            playerId: this.playerId,
+            playerName: game.getPlayerById(this.playerId).name,
+            actionName: game.getActionName(action)
+        };
+
+        // 온라인 모드라면 Firebase를 통해 전송
+        if (this.isOnline && window.onlineRoomManager) {
+            window.onlineRoomManager.broadcastActionResponse(actionData);
+        } else {
+            // 로컬 모드에서는 즉시 실행
+            this.resolveActionImmediately();
+        }
+    }
+
+    // 행동 대응 팝업 표시 (다른 플레이어용)
+    showActionResponsePopup(actionData) {
+        const modal = document.getElementById('action-response-modal');
+        const title = document.getElementById('action-response-title');
+        const details = document.getElementById('action-response-details');
+        const allowBtn = document.getElementById('allow-action-btn');
+        const challengeBtn = document.getElementById('challenge-action-btn');
+        const blockBtn = document.getElementById('block-action-btn');
+
+        title.textContent = `${actionData.playerName}님이 행동을 했습니다!`;
+        details.innerHTML = `
+            <div><strong>행동:</strong> ${actionData.actionName}</div>
+            ${actionData.targetId ? `<div><strong>대상:</strong> ${game.getPlayerById(actionData.targetId).name}</div>` : ''}
+        `;
+
+        // 버튼 표시/숨김
+        allowBtn.style.display = 'block';
+        challengeBtn.style.display = actionData.waitingFor === 'challenges' ? 'block' : 'none';
+        blockBtn.style.display = actionData.waitingFor === 'blocks' ? 'block' : 'none';
+
+        // 이벤트 리스너 설정
+        allowBtn.onclick = () => this.respondToAction('allow', actionData);
+        challengeBtn.onclick = () => this.respondToAction('challenge', actionData);
+        blockBtn.onclick = () => this.respondToAction('block', actionData);
+
+        modal.style.display = 'block';
+        this.startResponseTimer();
+    }
+
+    // 행동에 대한 응답
+    respondToAction(response, actionData) {
+        document.getElementById('action-response-modal').style.display = 'none';
+        this.clearResponseTimer();
+
+        const responseData = {
+            response,
+            playerId: this.playerId,
+            originalAction: actionData
+        };
+
+        if (this.isOnline && window.onlineRoomManager) {
+            window.onlineRoomManager.sendActionResponse(responseData);
+        }
+
+        this.showNotification(`${response === 'allow' ? '허용' : response === 'challenge' ? '도전' : '차단'}했습니다!`, 'info');
+    }
+
+    // 응답 타이머 시작
+    startResponseTimer() {
+        let seconds = 15;
+        const timerElement = document.getElementById('timer-seconds');
+        
+        this.responseTimer = setInterval(() => {
+            seconds--;
+            timerElement.textContent = seconds;
+            
+            if (seconds <= 0) {
+                this.clearResponseTimer();
+                document.getElementById('action-response-modal').style.display = 'none';
+                this.showNotification('시간 초과로 행동을 허용했습니다.', 'info');
+            }
+        }, 1000);
+    }
+
+    // 응답 타이머 정리
+    clearResponseTimer() {
+        if (this.responseTimer) {
+            clearInterval(this.responseTimer);
+            this.responseTimer = null;
+        }
+    }
+
+    // 로컬 모드에서 즉시 행동 실행
+    resolveActionImmediately() {
+        const result = game.resolveAction();
+        this.showNotification('행동이 실행되었습니다!', 'success');
+        this.updateGameUI();
+        this.syncGameState();
+    }
+
+    // 게임 상태 동기화
+    async syncGameState() {
+        if (this.isOnline && window.onlineRoomManager) {
+            try {
+                await window.onlineRoomManager.updateGameState(game.getGameState());
+                console.log('🔄 게임 상태 동기화 완료');
+            } catch (error) {
+                console.error('❌ 게임 상태 동기화 실패:', error);
+            }
+        } else {
+            // 로컬 모드에서는 localStorage에 저장
+            try {
+                const roomCode = localStorage.getItem('currentRoomCode');
+                if (roomCode && window.roomManager) {
+                    window.roomManager.updateGameState(roomCode, game.getGameState());
+                }
+            } catch (error) {
+                console.error('❌ 로컬 게임 상태 저장 실패:', error);
+            }
+        }
+    }
+
     // 허용 액션
     allowAction() {
         this.showNotification('액션을 허용했습니다.', 'success');
@@ -558,12 +756,18 @@ class CoupApp {
         }
     }
 
-    // 행동 선택 처리
+    // 행동 선택 처리  
     handleActionSelection(action) {
         const currentPlayer = game.getCurrentPlayer();
         
         if (currentPlayer.id !== this.playerId) {
             this.showNotification('당신의 차례가 아닙니다.', 'warning');
+            return;
+        }
+
+        // 기본 행동들 처리
+        if (['income', 'foreign-aid', 'coup', 'tax', 'assassinate', 'steal', 'exchange'].includes(action)) {
+            this.executeBasicAction(action);
             return;
         }
 
