@@ -634,9 +634,14 @@ class CoupApp {
         // 온라인 모드라면 Firebase를 통해 전송
         if (this.isOnline && window.onlineRoomManager) {
             window.onlineRoomManager.broadcastActionResponse(actionData);
+            // 온라인에서도 일단 팝업 테스트용으로 표시
+            setTimeout(() => {
+                this.showActionResponsePopup(actionData);
+            }, 500);
         } else {
-            // 로컬 모드에서는 즉시 실행
-            this.resolveActionImmediately();
+            // 로컬 모드에서는 즉시 팝업 표시 (테스트용)
+            console.log('🎮 로컬 모드: 행동 대응 팝업 표시');
+            this.showActionResponsePopup(actionData);
         }
     }
 
@@ -685,6 +690,26 @@ class CoupApp {
         }
 
         this.showNotification(`${response === 'allow' ? '허용' : response === 'challenge' ? '도전' : '차단'}했습니다!`, 'info');
+        
+        // 허용한 경우 행동 실행하고 다음 턴으로
+        if (response === 'allow') {
+            setTimeout(() => {
+                const result = game.resolveAction();
+                this.updateGameUI();
+                this.syncGameState();
+                console.log('✅ 행동 허용 후 게임 진행:', result);
+            }, 1000);
+        }
+        
+        // 차단이나 도전의 경우 추후 구현
+        if (response === 'challenge' || response === 'block') {
+            setTimeout(() => {
+                this.showNotification('도전/차단 시스템은 추후 업데이트 예정입니다. 일단 허용처리됩니다.', 'info');
+                const result = game.resolveAction();
+                this.updateGameUI();
+                this.syncGameState();
+            }, 1500);
+        }
     }
 
     // 응답 타이머 시작
@@ -700,6 +725,14 @@ class CoupApp {
                 this.clearResponseTimer();
                 document.getElementById('action-response-modal').style.display = 'none';
                 this.showNotification('시간 초과로 행동을 허용했습니다.', 'info');
+                
+                // 시간 초과 시에도 게임 진행
+                setTimeout(() => {
+                    const result = game.resolveAction();
+                    this.updateGameUI();
+                    this.syncGameState();
+                    console.log('⏰ 시간 초과로 행동 허용 후 게임 진행:', result);
+                }, 1000);
             }
         }, 1000);
     }
@@ -1386,14 +1419,15 @@ class CoupApp {
         if (currentPlayer) {
             currentPlayerElement.textContent = currentPlayer.name;
             
-            // 내 차례인지 표시
-            if (currentPlayer.id === this.playerId) {
-                currentPlayerElement.style.fontWeight = 'bold';
-                currentPlayerElement.style.color = '#007bff';
-            } else {
-                currentPlayerElement.style.fontWeight = 'normal';
-                currentPlayerElement.style.color = '#333';
-            }
+                    // 내 차례인지 표시
+        if (currentPlayer.id === this.playerId) {
+            currentPlayerElement.style.fontWeight = 'bold';
+            currentPlayerElement.style.color = '#007bff';
+            this.showNotification(`당신의 차례입니다! 🎯`, 'success');
+        } else {
+            currentPlayerElement.style.fontWeight = 'normal';
+            currentPlayerElement.style.color = '#333';
+        }
         }
     }
 
