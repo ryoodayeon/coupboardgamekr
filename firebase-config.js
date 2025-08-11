@@ -209,6 +209,9 @@ class OnlineRoomManager {
         const listenerData = this.roomListeners.get(roomCode);
         if (listenerData) {
             listenerData.ref.off('value', listenerData.listener);
+            if (listenerData.pendingActionsRef && listenerData.pendingActionsListener) {
+                listenerData.pendingActionsRef.off('child_added', listenerData.pendingActionsListener);
+            }
             this.roomListeners.delete(roomCode);
             console.log(`🔄 리스너 제거: ${roomCode}`);
         }

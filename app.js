@@ -26,6 +26,18 @@ class CoupApp {
             
             if (firebaseInitialized) {
                 onlineRoomManager = new OnlineRoomManager();
+                
+                // 행동 요청 콜백 설정
+                if (window.onlineRoomManager) {
+                    window.onlineRoomManager.onActionRequest = (actionData) => {
+                        console.log('📢 다른 플레이어 행동 요청 수신:', actionData);
+                        this.showActionResponsePopup(actionData);
+                    };
+                }
+                
+                // 전역 참조 설정
+                window.coupApp = this;
+                
                 this.updateConnectionStatus('online', '🌐 온라인 모드 (전세계 플레이 가능!)');
             } else {
                 this.updateConnectionStatus('offline', '💻 로컬 모드 (같은 기기에서만 플레이)');
@@ -634,14 +646,18 @@ class CoupApp {
         // 온라인 모드라면 Firebase를 통해 전송
         if (this.isOnline && window.onlineRoomManager) {
             window.onlineRoomManager.broadcastActionResponse(actionData);
-            // 온라인에서도 일단 팝업 테스트용으로 표시
-            setTimeout(() => {
-                this.showActionResponsePopup(actionData);
-            }, 500);
         } else {
-            // 로컬 모드에서는 즉시 팝업 표시 (테스트용)
-            console.log('🎮 로컬 모드: 행동 대응 팝업 표시');
-            this.showActionResponsePopup(actionData);
+            // 로컬 모드에서는 다른 플레이어들에게만 팝업 표시 (시뮬레이션)
+            console.log('🎮 로컬 모드: 다른 플레이어들에게 행동 대응 팝업 표시 시뮬레이션');
+            
+            // 멀티플레이어 시뮬레이션: 2초 후 자동 허용
+            setTimeout(() => {
+                this.showNotification('다른 플레이어들이 행동을 허용했습니다.', 'info');
+                const result = game.resolveAction();
+                this.updateGameUI();
+                this.syncGameState();
+                console.log('🎮 로컬 모드 자동 허용 후 게임 진행');
+            }, 2000);
         }
     }
 
@@ -691,25 +707,17 @@ class CoupApp {
 
         this.showNotification(`${response === 'allow' ? '허용' : response === 'challenge' ? '도전' : '차단'}했습니다!`, 'info');
         
-        // 허용한 경우 행동 실행하고 다음 턴으로
-        if (response === 'allow') {
-            setTimeout(() => {
-                const result = game.resolveAction();
-                this.updateGameUI();
-                this.syncGameState();
-                console.log('✅ 행동 허용 후 게임 진행:', result);
-            }, 1000);
-        }
-        
-        // 차단이나 도전의 경우 추후 구현
-        if (response === 'challenge' || response === 'block') {
-            setTimeout(() => {
+        // 모든 응답에 대해 행동 실행하고 다음 턴으로
+        setTimeout(() => {
+            if (response === 'challenge' || response === 'block') {
                 this.showNotification('도전/차단 시스템은 추후 업데이트 예정입니다. 일단 허용처리됩니다.', 'info');
-                const result = game.resolveAction();
-                this.updateGameUI();
-                this.syncGameState();
-            }, 1500);
-        }
+            }
+            
+            const result = game.resolveAction();
+            this.updateGameUI();
+            this.syncGameState();
+            console.log(`✅ ${response} 응답 후 게임 진행:`, result);
+        }, response === 'allow' ? 1000 : 1500);
     }
 
     // 응답 타이머 시작
@@ -1194,8 +1202,8 @@ class CoupApp {
         this.updatePlayersDisplay();
         this.updateMyCards();
         this.updateActionLog();
-        this.updateActionButtons();
         this.updateCurrentTurn();
+        this.updateActionButtons(); // 차례 업데이트 후 버튼 업데이트
         this.updateSanctuaryDisplay();
         
         console.log('✅ 게임 UI 업데이트 완료');
